@@ -1,0 +1,85 @@
+---
+# tasks/main.yml   
+- name: Check if ssh key is already present
+  stat:
+    path: "{{ KEY_PATH }}"
+  register: key_stat_result
+
+- name: Generate SSH key for accessing GitHub
+  command: "ssh-keygen -t rsa -f {{ KEY_PATH }} -N ''"
+  when: not key_stat_result.stat.exists
+
+- name: Get key content
+  command: "cat {{ KEY_PATH }}.pub"
+  register: key_content
+
+
+- name: Check if known_host exists
+  stat:
+    path: "{{ KNOWN_HOSTS_PATH }}"
+  register: known_hosts_stat
+
+- name: Create known_hosts if it doesn't exist
+  file:
+    path: "{{ KNOWN_HOSTS_PATH }}"
+    state: touch
+  when: not known_hosts_stat.stat.exists
+
+- name: Get the content of known hosts
+  shell: "cat {{ KNOWN_HOSTS_PATH }} | grep github.ibm.com"
+  register: host_stat
+  failed_when: host_stat.rc > 1
+
+
+- name: Modify known hosts
+  block:
+  - name: Fetch GitHub public key
+    command: ssh-keyscan -T 10 github.ibm.com
+    register: keyscan
+
+  - name: Add GitHub public key to ssh known_hosts
+    lineinfile:
+      path: "{{ KNOWN_HOSTS_PATH }}"
+      create: yes
+      line: "{{ item }}"
+    with_items: '{{ keyscan.stdout_lines }}'
+  when: host_stat.rc == 1
+
+- name: Add SSH public key to GitHub account
+  uri:
+    url: https://api.github.ibm.com/user/keys
+    validate_certs: no
+    method: POST
+    body:
+      title: "{{ KEY_TITLE }}"
+      key: "{{ key_content.stdout }}"
+    body_format: json
+    headers:
+      Content-Type: "application/json"
+      Authorization: "token {{ GITHUB_ACCESS_TOKEN }}"
+  register: task_log
+  failed_when: task_log.content.find('key is already in use') == 0
+
+- name: Configure SSH agent and clone repository
+  block:
+  - name: Remove old repository
+    file:
+      path: "{{ CLONE_DEST }}"
+      state: absent
+
+  - name: Add SSH key to SSH agent
+    shell: |
+      eval $(ssh-agent -s)
+      ssh-add {{ KEY_PATH }}
+
+  - name: Clone the repository
+    shell: GIT_SSH_COMMAND="ssh -i {{ KEY_PATH }} -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" {{ GIT_EXECUTABLE }} clone {{ GIT_REPO }} {{ CLONE_DEST }}
+  
+  - name: Switch branch 
+    shell: "{{ GIT_EXECUTABLE }} checkout {{ GIT_BRANCH }}"
+    args:
+      chdir: "{{ CLONE_DEST }}"
+
+  always:
+  - name: Kill the ssh-agent
+    shell: export pid=`ps -A | grep ssh-agent | awk 'NR==1{print $1}' | cut -d' ' -f1`; kill $pid
