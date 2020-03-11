@@ -1,12 +1,9 @@
 # vars/main.yml
 
-# The username on the target z/OS system (e.g. omvsadm)
-TARGET_USERNAME: <remote z/OS username>
-
 # Name of the SSH key (e.g. git_ssh_key)
 KEY_TITLE: <name of the SSH key>
 
-# Location of the SSH key to be (e.g. /u/{{ TARGET_USERNAME }}/.ssh/id_rsa_git)
+# Location of the SSH key to be (e.g. ~/.ssh/id_rsa_git)
 KEY_PATH: /path/to/ssh/key
 
 # # GitHub personal access token
@@ -18,11 +15,11 @@ GIT_REPO: ssh://git@github.com/path/to/repository.git
 # Branch of the git repository (e.g. master)
 GIT_BRANCH: <repository branch>
 
-# Directory where the repository will be cloned (e.g. /u/{{ TARGET_USERNAME }}/repo_name)
+# Directory where the repository will be cloned (e.g. /home/user/repo_name)
 CLONE_DEST: /path/to/clone/directory
 
-# Location of the SSH known hosts file (e.g. /u/{{ TARGET_USERNAME }}/.ssh/known_hosts)
+# Location of the SSH known hosts file (e.g. ~/.ssh/known_hosts)
 KNOWN_HOSTS_PATH: /path/to/ssh/known_hosts/file
 
-# Location of the git binary (e.g. /hsstools/git-2.14.4/bin/git)
+# Location of the git binary (e.g. /usr/bin/git)
 GIT_EXECUTABLE: /path/to/git/executable
