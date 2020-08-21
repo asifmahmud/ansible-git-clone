@@ -57,8 +57,9 @@
     headers:
       Content-Type: "application/json"
       Authorization: "token {{ GITHUB_ACCESS_TOKEN }}"
-  register: task_log
-  failed_when: task_log.content.find('key is already in use') == 0
+    status_code:
+    - 201
+    - 422
 
 - name: Configure SSH agent and clone repository
   block:
