@@ -23,3 +23,6 @@ KNOWN_HOSTS_PATH: /path/to/ssh/known_hosts/file
 
 # Location of the git binary (e.g. /usr/bin/git)
 GIT_EXECUTABLE: /path/to/git/executable
+
+# Github FQDN
+GIT_SERVER_FQDN: github.com
