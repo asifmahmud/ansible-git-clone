@@ -26,7 +26,7 @@
   when: not known_hosts_stat.stat.exists
 
 - name: Get the content of known hosts
-  shell: "cat {{ KNOWN_HOSTS_PATH }} | grep github.ibm.com"
+  shell: "cat {{ KNOWN_HOSTS_PATH }} | grep {{ GIT_SERVER_FQDN }}"
   register: host_stat
   failed_when: host_stat.rc > 1
 
@@ -34,7 +34,7 @@
 - name: Modify known hosts
   block:
   - name: Fetch GitHub public key
-    command: ssh-keyscan -T 10 github.ibm.com
+    command: "ssh-keyscan -T 10 {{ GIT_SERVER_FQDN }}"
     register: keyscan
 
   - name: Add GitHub public key to ssh known_hosts
@@ -47,7 +47,7 @@
 
 - name: Add SSH public key to GitHub account
   uri:
-    url: https://api.github.ibm.com/user/keys
+    url: "https://api.{{ GIT_SERVER_FQDN }}/user/keys"
     validate_certs: no
     method: POST
     body:
